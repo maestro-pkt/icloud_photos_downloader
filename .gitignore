@@ -2,3 +2,7 @@ cron_script.sh
 Photos/
 __pycache__
 *.pyc
+ic.txt
+icloud.log
+out.txt
+out2.txt
