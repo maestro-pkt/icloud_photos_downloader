@@ -10,6 +10,7 @@ import itertools
 import io
 import pprint
 from tinydb import TinyDB, Query
+from datetime import datetime, timedelta, timezone
 from tqdm import tqdm
 from dateutil.parser import parse
 
@@ -41,6 +42,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--recent',
               help='Number of recent photos to download (default: download all photos)',
               type=click.IntRange(0))
+@click.option('--days-ago',
+              help='Number of days of photos to download (default: download all photos)',
+              type=click.IntRange(0))              
 @click.option('--until-found',
               help='Download most recently added photos until we find x number of previously downloaded consecutive photos (default: download all photos)',
               type=click.IntRange(0))
@@ -69,7 +73,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def download(directory, username, password, recent, \
-    until_found, force,\
+    until_found, force, days_ago,\
     smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
     notification_email
     ):
@@ -90,6 +94,8 @@ def download(directory, username, password, recent, \
     total_item_count = 0
     total_downloads = 0
     
+    if days_ago != None:
+        date_N_days_ago = datetime.now(timezone.utc) - timedelta(days=days_ago)
         
     for album_index, this_album in enumerate(albums):
          
@@ -135,7 +141,11 @@ def download(directory, username, password, recent, \
                         logHandle.write("[%d] %s already downloaded.\n" % (photo_index, truncate_middle(download_path, 96)) )
                         progress_bar.set_description("[%d] %s already downloaded." % (photo_index, truncate_middle(download_path, 96)))
                         break
-
+                    
+                    #print("Days Ago[%s] date_N_days_ago[%s] photo.created[%s]\n" % (days_ago, date_N_days_ago, photo.created ) )
+                    if days_ago != None and photo.created < date_N_days_ago:
+                        continue
+                    
                     download_photo(photo, download_path, progress_bar, photo_index, db, this_album)
 
                     if until_found is not None:
